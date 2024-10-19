@@ -11,6 +11,7 @@ import { formatDate } from "../Helpers";
 import { Expense } from "../types";
 import AmountDisplay from "./AmountDisplay";
 import { categories } from "../data/categories";
+import { useBudgetStates } from "../Context/BudgetContext";
 
 type ExpenseDetailProps = {
   details: Expense
@@ -19,9 +20,19 @@ type ExpenseDetailProps = {
 const ExpenseDetail = ({ details } : ExpenseDetailProps) => {
   const categoryInfo = useMemo(() => categories.filter(cat => cat.id === details.category)[0], [details])
 
+  const { dispatch } = useBudgetStates();
+
+  const removeBtn = () => {
+    dispatch({ type: 'REMOVE_EXPENSE', payload: { id: details.id }})
+  }
+
+  const updateExpenseBtn = () => {
+    dispatch({ type: 'GET_EXPENSE_BY_ID', payload: { id: details.id }})
+  }
+
   const leadingActions = () => (
     <LeadingActions>
-      <SwipeAction onClick={() => {}}>
+      <SwipeAction onClick={updateExpenseBtn}>
         Actualizar
       </SwipeAction>
     </LeadingActions>
@@ -29,7 +40,7 @@ const ExpenseDetail = ({ details } : ExpenseDetailProps) => {
 
   const trailingActions = () => (
     <TrailingActions>
-      <SwipeAction onClick={() => {}} destructive={true}>
+      <SwipeAction onClick={removeBtn} destructive={true}>
         Eliminar
       </SwipeAction>
     </TrailingActions>
@@ -38,7 +49,7 @@ const ExpenseDetail = ({ details } : ExpenseDetailProps) => {
   return (
     <SwipeableList>
       <SwipeableListItem
-        maxSwipe={30}
+        maxSwipe={1}
         leadingActions={leadingActions()}
         trailingActions={trailingActions()}
       >

@@ -4,10 +4,10 @@ import Form from "./Form";
 import BudgetTracker from "./BudgetTracker";
 import ExpenseModal from "./ExpenseModal";
 import ExpenseList from "./ExpenseList";
+import FilteredCategory from "./FilteredCategory";
 
 const Home = () => {
   const { state } = useBudgetStates();
-
   const flag = useMemo(() => state.budget > 0, [state.budget]);
 
   return (
@@ -18,6 +18,7 @@ const Home = () => {
 
       {flag && (
         <main className="max-w-3xl mx-auto py-10">
+          <FilteredCategory />
           <ExpenseList />
           <ExpenseModal />
         </main>

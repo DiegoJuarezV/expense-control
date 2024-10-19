@@ -2,7 +2,7 @@ import { categories } from "../data/categories";
 import DatePicker from 'react-date-picker';
 import 'react-date-picker/dist/DatePicker.css';
 import 'react-calendar/dist/Calendar.css';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DraftExpense, Value } from "../types";
 import ErrorMessage from "./ErrorMessage";
 import { useBudgetStates } from "../Context/BudgetContext";
@@ -16,10 +16,19 @@ const initialState: DraftExpense = {
 
 const ExpenseForm = () => {
   const [expense, setExpense] = useState<DraftExpense>(initialState)
-
   const [error, setError] = useState(false);
+  const { state, dispatch, availableAmount } = useBudgetStates();
+  const [previousAmount, setPreviousAmount] = useState(0);
 
-  const { dispatch } = useBudgetStates();
+  const allowedExpense = (expense.amount - previousAmount) > availableAmount;
+
+  useEffect(() => {
+    if (state.editedExpense) {
+      const updatedExpense = state.expenses.filter(expense => expense.id === state.editedExpense)[0];
+      setExpense(updatedExpense)
+      setPreviousAmount(updatedExpense.amount)
+    }
+  }, [state.editedExpense, state.expenses])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -36,11 +45,17 @@ const ExpenseForm = () => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (Object.values(expense).includes('')) {
+    if (Object.values(expense).includes('') || allowedExpense || expense.amount === 0) {
       setError(true)
       return
     } 
-    dispatch({ type: 'ADD_EXPENSE', payload: { expense } })
+
+    if (state.editedExpense) {
+      dispatch({ type: 'UPDATE_EXPENSE', payload: { expense: { ...expense, id: state.editedExpense } }})
+    } else {
+      dispatch({ type: 'ADD_EXPENSE', payload: { expense } })
+    }
+
     setExpense(initialState)
     setError(false)
   }
@@ -48,10 +63,10 @@ const ExpenseForm = () => {
   return (
     <form className="space-y-5" onSubmit={handleSubmit}>
       <legend className="uppercase text-2xl text-center font-black border-b-4 border-blue-500 py-2">
-        Nuevo Gasto
+        {state.editedExpense ? "Editar Gasto" : "Nuevo Gasto"}
       </legend>
 
-      {error && <ErrorMessage />}
+      {error && <ErrorMessage allowedExpense={allowedExpense} />}
 
       <div className="flex flex-col gap-2">
         <label 
@@ -130,7 +145,7 @@ const ExpenseForm = () => {
         type="submit"
         className="bg-blue-600 cursor-pointer hover:bg-blue-400 w-full p-2 text-white uppercase 
           font-bold rounded-lg" 
-        value={'Registrar Gasto'}
+        value={state.editedExpense ? "Guardar Cambios" : "Agregar Gasto"}
       />
     </form>
   )
